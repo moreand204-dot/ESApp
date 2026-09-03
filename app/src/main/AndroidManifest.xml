@@ -1,0 +1,28 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <uses-permission android:name="android.permission.INTERNET"/>
+    <uses-permission android:name="android.permission.CAMERA"/>
+    <uses-permission android:name="android.permission.RECORD_AUDIO"/>
+    <!-- Gallery access: modern (13+) granular media permissions, plus the
+         legacy storage permissions for older devices (capped with
+         maxSdkVersion so they're a no-op, not a prompt, on 13+/29+). -->
+    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES"/>
+    <uses-permission android:name="android.permission.READ_MEDIA_VIDEO"/>
+    <uses-permission android:name="android.permission.READ_MEDIA_AUDIO"/>
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" android:maxSdkVersion="32"/>
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" android:maxSdkVersion="28"/>
+    <uses-feature android:name="android.hardware.camera" android:required="false"/>
+    <!-- Package-visibility (Android 11+): lets us resolve/launch the
+         camera + gallery-picker apps from an implicit intent. -->
+    <queries>
+        <intent><action android:name="android.media.action.IMAGE_CAPTURE"/></intent>
+        <intent><action android:name="android.intent.action.GET_CONTENT"/></intent>
+    </queries>
+    <application android:allowBackup="true" android:label="ES App" android:icon="@mipmap/ic_launcher" android:roundIcon="@mipmap/ic_launcher_round" android:theme="@style/AppTheme" android:usesCleartextTraffic="true" android:hardwareAccelerated="true">
+        <activity android:name=".MainActivity" android:screenOrientation="portrait" android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN"/>
+                <category android:name="android.intent.category.LAUNCHER"/>
+            </intent-filter>
+        </activity>
+    </application>
+</manifest>

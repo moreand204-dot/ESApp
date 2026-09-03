@@ -1,0 +1,68 @@
+<!doctype html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>ES App</title><link rel="stylesheet" href="style.css?v=10"></head><body>
+<div class="bg"><i></i><i></i><i></i></div>
+<div id="app">
+<header id="appbar" class="appbar glass">
+  <div class="abTop">
+    <button id="abBack" class="abBack hidden" onclick="goBack()"><svg><use href="#back"/></svg></button>
+    <h1 id="pageTitle">الدردشات</h1>
+    <div class="abActions" id="abActions">
+      <button onclick="openSearch()" aria-label="بحث"><svg><use href="#search"/></svg></button>
+      <button onclick="openMenuHeader()" aria-label="القائمة"><svg><use href="#more"/></svg></button>
+    </div>
+  </div>
+  <div id="abTabs" class="tabs"></div>
+</header>
+<main id="screen"></main>
+<nav class="bottom glass">
+  <button data-page="chats" class="active" onclick="go('chats')"><svg><use href="#chat"/></svg><span>الدردشات</span></button>
+  <button data-page="updates" onclick="go('updates')"><svg><use href="#updates"/></svg><span>التحديثات</span></button>
+  <button data-page="communities" onclick="go('communities')"><svg><use href="#community"/></svg><span>المجتمعات</span></button>
+  <button data-page="calls" onclick="go('calls')"><svg><use href="#phone"/></svg><span>المكالمات</span></button>
+</nav>
+<div id="modal"></div>
+</div>
+<svg style="display:none"><defs>
+<symbol id="search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.7"/><path d="m16 16 5 5"/></symbol>
+<symbol id="more" viewBox="0 0 24 24"><circle cx="12" cy="5" r="1.4"/><circle cx="12" cy="12" r="1.4"/><circle cx="12" cy="19" r="1.4"/></symbol>
+<symbol id="chat" viewBox="0 0 24 24"><path d="M4 5.7A2.7 2.7 0 0 1 6.7 3h10.6A2.7 2.7 0 0 1 20 5.7v8.6a2.7 2.7 0 0 1-2.7 2.7H11l-4.6 4v-4h-.0A2.7 2.7 0 0 1 4 14.3Z"/></symbol>
+<symbol id="updates" viewBox="0 0 24 24"><path d="M5 19V9M12 19V5M19 19v-7"/></symbol>
+<symbol id="community" viewBox="0 0 24 24"><circle cx="8" cy="9" r="3"/><circle cx="16" cy="9" r="3"/><path d="M3.5 19c.6-3.5 2.1-5 4.5-5s3.9 1.5 4.5 5M11.5 19c.6-3.5 2.1-5 4.5-5s3.9 1.5 4.5 5"/></symbol>
+<symbol id="phone" viewBox="0 0 24 24"><path d="M7.2 3.8 10 6.6 8.2 9.3a13.4 13.4 0 0 0 6.5 6.5l2.7-1.8 2.8 2.8-1.6 2.7c-.6 1-1.8 1.4-2.9 1.1C9.2 18.3 5.7 14.8 3.4 8.3c-.4-1.1.1-2.3 1.1-2.9Z"/></symbol>
+<symbol id="back" viewBox="0 0 24 24"><path d="m15 5-7 7 7 7"/></symbol>
+<symbol id="send" viewBox="0 0 24 24"><path d="m3 11 18-8-7 18-3-8Z"/><path d="m11 13 10-10"/></symbol>
+<symbol id="settings" viewBox="0 0 24 24"><path d="M12 8.2a3.8 3.8 0 1 0 0 7.6 3.8 3.8 0 0 0 0-7.6Z"/><path d="m19.4 13.5 1.2 1-.1 1.2-1.5 1.5-1.2-.1-1-.8-1.7.7-.3 1.2-.9.8h-2.1l-.9-.8-.3-1.2-1.7-.7-1 .8-1.2.1-1.5-1.5-.1-1.2 1.2-1-.2-1.8-1.2-.7-.4-1.1.8-2 1.1-.5 1.2.4 1.4-1.2-.2-1.3.7-1h2.1l.7 1-.2 1.3 1.4 1.2 1.2-.4 1.1.5.8 2-.4 1.1-1.2.7Z"/></symbol>
+<symbol id="user" viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.5"/><path d="M5 20c.7-4.1 3-6 7-6s6.3 1.9 7 6"/></symbol>
+<symbol id="lock" viewBox="0 0 24 24"><rect x="5" y="10" width="14" height="10" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></symbol>
+<symbol id="check" viewBox="0 0 24 24"><path d="m5 12 4 4L19 6"/></symbol>
+<symbol id="bell" viewBox="0 0 24 24"><path d="M6 10a6 6 0 1 1 12 0c0 4 1.3 5.3 1.8 6H4.2C4.7 15.3 6 14 6 10Z"/><path d="M10 20a2 2 0 0 0 4 0"/></symbol>
+<symbol id="globe" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.4"/><path d="M3.6 12h16.8M12 3.6c2.6 2.2 4 5 4 8.4s-1.4 6.2-4 8.4c-2.6-2.2-4-5-4-8.4s1.4-6.2 4-8.4Z"/></symbol>
+<symbol id="help" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.6"/><path d="M9.5 9.3a2.6 2.6 0 1 1 3.8 2.3c-.9.5-1.3 1-1.3 2"/><circle cx="12" cy="16.7" r="0.15"/></symbol>
+<symbol id="invite" viewBox="0 0 24 24"><circle cx="9.5" cy="8.5" r="3.3"/><path d="M3.6 19.5c.6-3.5 2.6-5.2 5.9-5.2s5.3 1.7 5.9 5.2"/><path d="M18.3 6.5v6M15.3 9.5h6"/></symbol>
+<symbol id="devices" viewBox="0 0 24 24"><rect x="3" y="5" width="13" height="9" rx="1.4"/><path d="M3 17h13"/><rect x="17.2" y="9" width="4.2" height="8" rx="1"/></symbol>
+<symbol id="storage" viewBox="0 0 24 24"><path d="M6.5 17.5A4 4 0 0 1 7 9.6 5.2 5.2 0 0 1 17 9a3.6 3.6 0 0 1 .5 7.2"/><path d="M12 12v6M9.5 15.5 12 18l2.5-2.5"/></symbol>
+<symbol id="edit" viewBox="0 0 24 24"><path d="m5 19 .8-3.6L15.2 5.9a1.8 1.8 0 0 1 2.6 0l.3.3a1.8 1.8 0 0 1 0 2.6L8.6 18.2 5 19Z"/></symbol>
+<symbol id="list" viewBox="0 0 24 24"><circle cx="4.6" cy="6" r="1.1"/><circle cx="4.6" cy="12" r="1.1"/><circle cx="4.6" cy="18" r="1.1"/><path d="M9 6h11M9 12h11M9 18h11"/></symbol>
+<symbol id="broadcast" viewBox="0 0 24 24"><path d="M4 10.5v3l3 .6v5l2-1v-4l7.5 1.6a2.3 2.3 0 0 0 0-6.4L7 10.9Z"/><path d="M18 8.5c1.6 1 1.6 6 0 7"/></symbol>
+<symbol id="star" viewBox="0 0 24 24"><path d="m12 3.5 2.5 5.4 5.9.7-4.4 4 1.2 5.9L12 16.6l-5.2 2.9 1.2-5.9-4.4-4 5.9-.7Z"/></symbol>
+<symbol id="shield" viewBox="0 0 24 24"><path d="M12 3.4 19 6v5.4c0 4.6-3 7.7-7 9.2-4-1.5-7-4.6-7-9.2V6Z"/><path d="m9 12 2 2 4-4.3"/></symbol>
+<symbol id="access" viewBox="0 0 24 24"><circle cx="12" cy="4.6" r="1.7"/><path d="M4 9h16M12 9v11.5M8.4 20.5 12 14l3.6 6.5"/></symbol>
+<symbol id="appupdate" viewBox="0 0 24 24"><rect x="6" y="2.5" width="12" height="19" rx="2.4"/><path d="m9 12.3 2.2 2.2L15.5 10"/></symbol>
+<symbol id="camera" viewBox="0 0 24 24"><path d="M4 8.2a1.8 1.8 0 0 1 1.8-1.8h1.6l1-1.8h7.2l1 1.8h1.6A1.8 1.8 0 0 1 20 8.2v9A1.8 1.8 0 0 1 18.2 19H5.8A1.8 1.8 0 0 1 4 17.2Z"/><circle cx="12" cy="12.6" r="3.5"/></symbol>
+<symbol id="key" viewBox="0 0 24 24"><circle cx="8" cy="15" r="3.4"/><path d="m10.3 12.7 8.2-8.2M15.5 5.5l2.3 2.3M13 8l2 2"/></symbol>
+<symbol id="link" viewBox="0 0 24 24"><path d="M9.5 14.5 14.5 9.5"/><path d="M11 7.2 12.7 5.5a3.2 3.2 0 0 1 4.5 4.5L15.5 11.7"/><path d="M13 16.8 11.3 18.5a3.2 3.2 0 0 1-4.5-4.5L8.5 12.3"/></symbol>
+<symbol id="calendar" viewBox="0 0 24 24"><rect x="4" y="5.5" width="16" height="14.5" rx="2"/><path d="M4 10h16M8 3v4M16 3v4"/></symbol>
+<symbol id="keypad" viewBox="0 0 24 24"><circle cx="6" cy="6" r="1.3"/><circle cx="12" cy="6" r="1.3"/><circle cx="18" cy="6" r="1.3"/><circle cx="6" cy="12" r="1.3"/><circle cx="12" cy="12" r="1.3"/><circle cx="18" cy="12" r="1.3"/><circle cx="6" cy="18" r="1.3"/><circle cx="12" cy="18" r="1.3"/><circle cx="18" cy="18" r="1.3"/></symbol>
+<symbol id="heart" viewBox="0 0 24 24"><path d="M12 20s-7.5-4.6-9.6-9A5 5 0 0 1 12 6.6 5 5 0 0 1 21.6 11c-2.1 4.4-9.6 9-9.6 9Z"/></symbol>
+<symbol id="flag" viewBox="0 0 24 24"><path d="M6 3v18"/><path d="M6 4.5h11l-2.5 3.5L17 11.5H6Z"/></symbol>
+<symbol id="next" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></symbol>
+<symbol id="incall" viewBox="0 0 24 24"><path d="M7.2 3.8 10 6.6 8.2 9.3a13.4 13.4 0 0 0 6.5 6.5l2.7-1.8 2.8 2.8-1.6 2.7c-.6 1-1.8 1.4-2.9 1.1C9.2 18.3 5.7 14.8 3.4 8.3c-.4-1.1.1-2.3 1.1-2.9Z"/><path d="M4 20 20 4"/></symbol>
+<symbol id="outcall" viewBox="0 0 24 24"><path d="M7.2 3.8 10 6.6 8.2 9.3a13.4 13.4 0 0 0 6.5 6.5l2.7-1.8 2.8 2.8-1.6 2.7c-.6 1-1.8 1.4-2.9 1.1C9.2 18.3 5.7 14.8 3.4 8.3c-.4-1.1.1-2.3 1.1-2.9Z"/><path d="m20 4-6 6M20 4h-4M20 4v4"/></symbol>
+<symbol id="video" viewBox="0 0 24 24"><rect x="3" y="7" width="12" height="10" rx="2.2"/><path d="m15 10.3 6-3.3v10l-6-3.3Z"/></symbol>
+<symbol id="block" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.6"/><path d="m6.2 6.2 11.6 11.6"/></symbol>
+<symbol id="smile" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.7"/><circle cx="9" cy="10" r="1"/><circle cx="15" cy="10" r="1"/><path d="M8.5 14c1.7 2.3 5.3 2.3 7 0"/></symbol>
+<symbol id="attach" viewBox="0 0 24 24"><path d="m8.5 12.5 6.7-6.7a3.2 3.2 0 0 1 4.5 4.5l-8.3 8.3a5 5 0 0 1-7.1-7.1l8-8"/></symbol>
+<symbol id="mic" viewBox="0 0 24 24"><rect x="8.2" y="3.2" width="7.6" height="11.2" rx="3.8"/><path d="M5.5 11.5a6.5 6.5 0 0 0 13 0M12 18v3M8.5 21h7"/></symbol>
+<symbol id="gallery" viewBox="0 0 24 24"><rect x="3.5" y="4.5" width="17" height="15" rx="2"/><circle cx="8.5" cy="9" r="1.5"/><path d="m5 17 4.2-4 3.2 2.8 2.5-2.4 4.1 3.6"/></symbol>
+<symbol id="sticker" viewBox="0 0 24 24"><path d="M5 3.8h10.2L20.2 9v10.5A1.7 1.7 0 0 1 18.5 21h-13A1.7 1.7 0 0 1 3.8 19.3v-13A2.5 2.5 0 0 1 5 3.8Z"/><path d="M15 4v5h5M8 14h5M8 17h3"/></symbol>
+</defs></svg>
+<script src="app.js?v=10"></script></body></html>

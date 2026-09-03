@@ -1,0 +1,30 @@
+{
+  "project_info": {
+    "project_number": "657166584629",
+    "firebase_url": "https://escanor-chat-8178c-default-rtdb.firebaseio.com",
+    "project_id": "escanor-chat-8178c",
+    "storage_bucket": "escanor-chat-8178c.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:657166584629:android:c89ce853de9ff4b5a0da7c",
+        "android_client_info": {
+          "package_name": "com.es.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAXqInUQqptgCTzdffylAjmzbdzI1p3rI4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
