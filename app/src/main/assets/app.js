@@ -926,3 +926,215 @@ async function createGroupNow(){const name=($('groupName')?.value||'').trim();co
 
 const accent=localStorage.getItem('accent');if(accent)document.documentElement.style.setProperty('--green',accent);applyLangDom();applySettings();
 if(loggedIn&&auth&&auth.accessToken){bootRemote().finally(()=>renderChats())}else{startAuth()}
+
+/* ============ REAL SERVER-BACKED MESSAGING (overrides local-only demo versions above) ============ */
+let msgPollTimer=null;
+function stopMsgPoll(){if(msgPollTimer){clearInterval(msgPollTimer);msgPollTimer=null}}
+async function loadServerMessages(chatId){
+  try{
+    const list=await apiAuthed('/chats/'+encodeURIComponent(chatId)+'/messages');
+    return list.map(m=>({id:m.id,text:m.text,mine:m.senderId===currentUserId,createdAt:m.createdAt}));
+  }catch(e){return null}
+}
+function renderMessagesInto(list){
+  const box=$('messages');
+  if(!box)return;
+  box.innerHTML=(list&&list.length)?list.map(m=>`<div class="bubble ${m.mine?'me':''}"><div class="msgText">${esc(m.text)}</div><small class="msgTime">${new Date(m.createdAt||Date.now()).toLocaleTimeString(LANG==='ar'?'ar-EG':'en',{hour:'numeric',minute:'2-digit'})}</small></div>`).join(''):`<div class="empty">${t('noMessages')}</div>`;
+  box.scrollTop=box.scrollHeight;
+}
+async function openConversation(i){
+  stopMsgPoll();
+  openChat=i;const c=chats[i];c.unread=0;save();
+  layout(`<div class="conversation">
+    <div class="chatHead"><button class="back" onclick="stopMsgPoll();renderChats()">${icon('back')}</button><div class="avatar">${esc(c.name[0])}</div><div class="chHeadName"><div class="name">${esc(c.name)}</div><small>${t('online')}</small></div><button class="chHeadMore" onclick="chatHeaderMenu(${i})">${icon('more')}</button></div>
+    <div class="messages" id="messages"><div class="empty">${t('loading')}</div></div>
+    <div class="composer"><input id="message" placeholder="${t('typeMessage')}" onkeydown="if(event.key==='Enter')sendMessage()"><button onclick="sendMessage()">${icon('send')}</button></div>
+  </div>`, 'conversation');
+  if(c.server && c.id && auth && auth.accessToken){
+    const list=await loadServerMessages(c.id);
+    if(list)renderMessagesInto(list);
+    else renderMessagesInto((c.msg||[]).map(txt=>({text:txt,mine:false})));
+    msgPollTimer=setInterval(async()=>{
+      if(openChat!==i)return stopMsgPoll();
+      const fresh=await loadServerMessages(c.id);
+      if(fresh)renderMessagesInto(fresh);
+    },4000);
+  } else {
+    renderMessagesInto((c.msg||[]).map(txt=>({text:txt,mine:false})));
+  }
+}
+async function sendMessage(){
+  const inp=$('message');if(!inp||!inp.value.trim())return;const text=inp.value.trim();
+  const c=chats[openChat];
+  inp.value='';
+  if(c.server && c.id && auth && auth.accessToken){
+    try{
+      await apiAuthed('/chats/'+encodeURIComponent(c.id)+'/messages',{method:'POST',body:JSON.stringify({text})});
+      c.text=text;c.time=t('now');save();
+      const fresh=await loadServerMessages(c.id);
+      if(fresh)renderMessagesInto(fresh);
+    }catch(e){showModal(infoSheet(t('typeMessage'),e.message||t('networkError')))}
+  } else {
+    c.msg=c.msg||[];c.msg.push(text);c.text=text;c.time=t('now');save();
+    renderMessagesInto((c.msg||[]).map(txt=>({text:txt,mine:true})));
+  }
+}
+
+/* ============ REAL SERVER-BACKED STATUSES ============ */
+async function renderUpdates(){
+  page='updates';document.body.classList.remove('conversationMode');
+  setAppbar(t('updates'));
+  layout(`<div class="hero"><h2>${t('updates')}</h2><p>${t('updatesHero')}</p></div>
+  <div class="card"><button class="listButton" onclick="addStatusPrompt()"><span class="listIcon">+</span><span><b>${t('addStatus')}</b><small>${t('addStatusSub')}</small></span></button></div>
+  <div class="groupLabel">${t('recentStatus')}</div>
+  <div class="list" id="statusList"><div class="empty">${t('loading')}</div></div>`);
+  relabelNav();
+  if(auth&&auth.accessToken){
+    try{
+      const list=await apiAuthed('/statuses');
+      const box=$('statusList');
+      if(box)box.innerHTML=list.length?list.map(s=>`<div class="chat"><div class="avatar">${esc((s.user&&s.user.name||'E')[0])}</div><div class="chatMain"><div class="row"><div class="name">${esc((s.user&&s.user.name)||'ES')}</div></div><div class="row"><div class="preview">${esc(s.text||'')}</div></div></div></div>`).join(''):`<div class="empty">${t('noStatus')}</div>`;
+    }catch(e){const box=$('statusList');if(box)box.innerHTML=`<div class="empty">${t('noStatus')}</div>`}
+  }
+}
+function addStatusPrompt(){showModal(`<div class="sheet"><div class="sheetHead">${t('addStatus')}</div><textarea id="statusText" class="ncDesc" maxlength="700" placeholder="${t('statusTextPh')}"></textarea><button onclick="postStatusNow()">${icon('check')}<span>${t('save')}</span></button></div>`)}
+async function postStatusNow(){
+  const text=($('statusText')?.value||'').trim();
+  if(!text)return;
+  try{await apiAuthed('/statuses',{method:'POST',body:JSON.stringify({text})});closeModal();renderUpdates()}
+  catch(e){showModal(infoSheet(t('addStatus'),e.message||t('networkError')))}
+}
+
+/* ============ REAL SERVER-BACKED COMMUNITIES ============ */
+async function renderCommunities(){
+  page='communities';document.body.classList.remove('conversationMode');
+  setAppbar(t('communities'));
+  layout(`<div class="hero"><h2>${t('communities')}</h2><p>${t('communitiesHero')}</p></div>
+  <div class="card"><button class="listButton" onclick="communityIntro()"><span class="listIcon">${icon('community')}</span><span><b>${t('createCommunity')}</b></span></button></div>
+  <div class="groupLabel">${t('communities')}</div>
+  <div class="list" id="communityList"><div class="empty">${t('loading')}</div></div>`);
+  relabelNav();
+  if(auth&&auth.accessToken){
+    try{
+      const list=await apiAuthed('/communities');
+      const box=$('communityList');
+      if(box)box.innerHTML=list.length?list.map(c=>`<div class="chat"><div class="avatar">${esc(c.name[0])}</div><div class="chatMain"><div class="row"><div class="name">${esc(c.name)}</div></div><div class="row"><div class="preview">${(c._count&&c._count.members)||0} ${t('groups')||''}</div></div></div></div>`).join(''):`<div class="empty">${t('noCommunities')}</div>`;
+    }catch(e){const box=$('communityList');if(box)box.innerHTML=`<div class="empty">${t('noCommunities')}</div>`}
+  }
+}
+async function createCommunity(){
+  const name=($('ncName').value||'').trim();
+  const desc=($('ncDesc')?.value||'').trim();
+  if(!name){showModal(infoSheet(t('newCommunity'),t('nameRequired')));return}
+  try{
+    await apiAuthed('/communities',{method:'POST',body:JSON.stringify({name,description:desc})});
+    showModal(infoSheet(name,t('communityCreated')));
+    go('communities');
+  }catch(e){showModal(infoSheet(t('newCommunity'),e.message||t('networkError')))}
+}
+
+/* ============ REAL SERVER-BACKED MESSAGING (overrides local-only demo versions above) ============ */
+let msgPollTimer=null;
+function stopMsgPoll(){if(msgPollTimer){clearInterval(msgPollTimer);msgPollTimer=null}}
+async function loadServerMessages(chatId){
+  try{
+    const list=await apiAuthed('/chats/'+encodeURIComponent(chatId)+'/messages');
+    return list.map(m=>({id:m.id,text:m.text,mine:m.senderId===currentUserId,createdAt:m.createdAt}));
+  }catch(e){return null}
+}
+function renderMessagesInto(list){
+  const box=$('messages');
+  if(!box)return;
+  box.innerHTML=(list&&list.length)?list.map(m=>`<div class="bubble ${m.mine?'me':''}"><div class="msgText">${esc(m.text)}</div><small class="msgTime">${new Date(m.createdAt||Date.now()).toLocaleTimeString(LANG==='ar'?'ar-EG':'en',{hour:'numeric',minute:'2-digit'})}</small></div>`).join(''):`<div class="empty">${t('noMessages')}</div>`;
+  box.scrollTop=box.scrollHeight;
+}
+async function openConversation(i){
+  stopMsgPoll();
+  openChat=i;const c=chats[i];c.unread=0;save();
+  layout(`<div class="conversation">
+    <div class="chatHead"><button class="back" onclick="stopMsgPoll();renderChats()">${icon('back')}</button><div class="avatar">${esc(c.name[0])}</div><div class="chHeadName"><div class="name">${esc(c.name)}</div><small>${t('online')}</small></div><button class="chHeadMore" onclick="chatHeaderMenu(${i})">${icon('more')}</button></div>
+    <div class="messages" id="messages"><div class="empty">${t('loading')}</div></div>
+    <div class="composer"><input id="message" placeholder="${t('typeMessage')}" onkeydown="if(event.key==='Enter')sendMessage()"><button onclick="sendMessage()">${icon('send')}</button></div>
+  </div>`, 'conversation');
+  if(c.server && c.id && auth && auth.accessToken){
+    const list=await loadServerMessages(c.id);
+    if(list)renderMessagesInto(list);
+    else renderMessagesInto((c.msg||[]).map(txt=>({text:txt,mine:false})));
+    msgPollTimer=setInterval(async()=>{
+      if(openChat!==i)return stopMsgPoll();
+      const fresh=await loadServerMessages(c.id);
+      if(fresh)renderMessagesInto(fresh);
+    },4000);
+  } else {
+    renderMessagesInto((c.msg||[]).map(txt=>({text:txt,mine:false})));
+  }
+}
+async function sendMessage(){
+  const inp=$('message');if(!inp||!inp.value.trim())return;const text=inp.value.trim();
+  const c=chats[openChat];
+  inp.value='';
+  if(c.server && c.id && auth && auth.accessToken){
+    try{
+      await apiAuthed('/chats/'+encodeURIComponent(c.id)+'/messages',{method:'POST',body:JSON.stringify({text})});
+      c.text=text;c.time=t('now');save();
+      const fresh=await loadServerMessages(c.id);
+      if(fresh)renderMessagesInto(fresh);
+    }catch(e){showModal(infoSheet(t('typeMessage'),e.message||t('networkError')))}
+  } else {
+    c.msg=c.msg||[];c.msg.push(text);c.text=text;c.time=t('now');save();
+    renderMessagesInto((c.msg||[]).map(txt=>({text:txt,mine:true})));
+  }
+}
+
+/* ============ REAL SERVER-BACKED STATUSES ============ */
+async function renderUpdates(){
+  page='updates';document.body.classList.remove('conversationMode');
+  setAppbar(t('updates'));
+  layout(`<div class="hero"><h2>${t('updates')}</h2><p>${t('updatesHero')}</p></div>
+  <div class="card"><button class="listButton" onclick="addStatusPrompt()"><span class="listIcon">+</span><span><b>${t('addStatus')}</b><small>${t('addStatusSub')}</small></span></button></div>
+  <div class="groupLabel">${t('recentStatus')}</div>
+  <div class="list" id="statusList"><div class="empty">${t('loading')}</div></div>`);
+  relabelNav();
+  if(auth&&auth.accessToken){
+    try{
+      const list=await apiAuthed('/statuses');
+      const box=$('statusList');
+      if(box)box.innerHTML=list.length?list.map(s=>`<div class="chat"><div class="avatar">${esc((s.user&&s.user.name||'E')[0])}</div><div class="chatMain"><div class="row"><div class="name">${esc((s.user&&s.user.name)||'ES')}</div></div><div class="row"><div class="preview">${esc(s.text||'')}</div></div></div></div>`).join(''):`<div class="empty">${t('noStatus')}</div>`;
+    }catch(e){const box=$('statusList');if(box)box.innerHTML=`<div class="empty">${t('noStatus')}</div>`}
+  }
+}
+function addStatusPrompt(){showModal(`<div class="sheet"><div class="sheetHead">${t('addStatus')}</div><textarea id="statusText" class="ncDesc" maxlength="700" placeholder="${t('statusTextPh')}"></textarea><button onclick="postStatusNow()">${icon('check')}<span>${t('save')}</span></button></div>`)}
+async function postStatusNow(){
+  const text=($('statusText')?.value||'').trim();
+  if(!text)return;
+  try{await apiAuthed('/statuses',{method:'POST',body:JSON.stringify({text})});closeModal();renderUpdates()}
+  catch(e){showModal(infoSheet(t('addStatus'),e.message||t('networkError')))}
+}
+
+/* ============ REAL SERVER-BACKED COMMUNITIES ============ */
+async function renderCommunities(){
+  page='communities';document.body.classList.remove('conversationMode');
+  setAppbar(t('communities'));
+  layout(`<div class="hero"><h2>${t('communities')}</h2><p>${t('communitiesHero')}</p></div>
+  <div class="card"><button class="listButton" onclick="communityIntro()"><span class="listIcon">${icon('community')}</span><span><b>${t('createCommunity')}</b></span></button></div>
+  <div class="groupLabel">${t('communities')}</div>
+  <div class="list" id="communityList"><div class="empty">${t('loading')}</div></div>`);
+  relabelNav();
+  if(auth&&auth.accessToken){
+    try{
+      const list=await apiAuthed('/communities');
+      const box=$('communityList');
+      if(box)box.innerHTML=list.length?list.map(c=>`<div class="chat"><div class="avatar">${esc(c.name[0])}</div><div class="chatMain"><div class="row"><div class="name">${esc(c.name)}</div></div><div class="row"><div class="preview">${(c._count&&c._count.members)||0} ${t('groups')||''}</div></div></div></div>`).join(''):`<div class="empty">${t('noCommunities')}</div>`;
+    }catch(e){const box=$('communityList');if(box)box.innerHTML=`<div class="empty">${t('noCommunities')}</div>`}
+  }
+}
+async function createCommunity(){
+  const name=($('ncName').value||'').trim();
+  const desc=($('ncDesc')?.value||'').trim();
+  if(!name){showModal(infoSheet(t('newCommunity'),t('nameRequired')));return}
+  try{
+    await apiAuthed('/communities',{method:'POST',body:JSON.stringify({name,description:desc})});
+    showModal(infoSheet(name,t('communityCreated')));
+    go('communities');
+  }catch(e){showModal(infoSheet(t('newCommunity'),e.message||t('networkError')))}
+}
