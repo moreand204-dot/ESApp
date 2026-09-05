@@ -1138,3 +1138,33 @@ async function createCommunity(){
     go('communities');
   }catch(e){showModal(infoSheet(t('newCommunity'),e.message||t('networkError')))}
 }
+
+/* ============ ON-SCREEN ERROR REPORTER (so we can see JS crashes without a computer) ============ */
+window.addEventListener('error',function(e){
+  try{
+    const el=document.getElementById('screen');
+    if(el)el.innerHTML='<div style="padding:20px;color:#fff;white-space:pre-wrap;font-size:12px;direction:ltr;text-align:left">JS ERROR:\n'+(e.message||'')+'\nat '+(e.filename||'')+':'+(e.lineno||'')+':'+(e.colno||'')+'\n'+((e.error&&e.error.stack)||'');
+  }catch(_){}
+});
+window.addEventListener('unhandledrejection',function(e){
+  try{
+    const el=document.getElementById('screen');
+    const reason=e.reason&&(e.reason.stack||e.reason.message||e.reason);
+    if(el)el.innerHTML='<div style="padding:20px;color:#fff;white-space:pre-wrap;font-size:12px;direction:ltr;text-align:left">PROMISE ERROR:\n'+reason+'</div>';
+  }catch(_){}
+});
+
+/* ============ NETWORK CALLS NOW TIME OUT INSTEAD OF HANGING FOREVER (overrides earlier api()) ============ */
+function api(path,opts={}){
+  const headers={'Content-Type':'application/json',...(opts.headers||{})};
+  const controller=new AbortController();
+  const timeoutId=setTimeout(()=>controller.abort(),8000);
+  return fetch(API_BASE+path,{...opts,headers,signal:controller.signal})
+    .then(async r=>{clearTimeout(timeoutId);let data={};try{data=await r.json()}catch(e){}
+      if(!r.ok) throw new Error(data.error||('HTTP '+r.status));
+      return data})
+    .catch(err=>{clearTimeout(timeoutId);
+      if(err && err.name==='AbortError') throw new Error(t('networkError')+' (timeout)');
+      throw err;
+    });
+}
